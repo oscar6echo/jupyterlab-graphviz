@@ -6,8 +6,10 @@ A JupyterLab extension for rendering .dot files.
 
 This jupyterlab extension allows to display, zoom into, and snapshot as [svg](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics) a [dot](<https://en.wikipedia.org/wiki/DOT_(graph_description_language)>) file.
 
-Based on [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm).
-Inspired by ObservableHQ notebook [@oscar6echo/zoom-and-pan-graphviz-dot](https://observablehq.com/@oscar6echo/zoom-and-pan-graphviz-dot).
+- Based on [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm).
+- Inspired by ObservableHQ notebook [@oscar6echo/zoom-and-pan-graphviz-dot](https://observablehq.com/@oscar6echo/zoom-and-pan-graphviz-dot).
+
+<img src="./img/screenshot-jupyterlab_graphviz.png" width=500px>
 
 ## Requirements
 
