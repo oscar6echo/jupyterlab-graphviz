@@ -8,7 +8,7 @@ const buildVizParams = async ({
   dotScript,
   wrapper,
 }: i.IParamsBuildVizParams): Promise<i.IOutputBuildVizParams> => {
-  console.log('------ start buildVizParams');
+  //   console.log('--- start buildVizParams');
 
   const svgStr = await utils.dot2svg(dotScript);
 
@@ -19,18 +19,18 @@ const buildVizParams = async ({
   const gw = parseInt(elt.getAttribute('width'));
   const gh = parseInt(elt.getAttribute('height'));
 
-  console.log({ gw, gh });
+  //   console.log({ gw, gh });
 
   const node = wrapper.node();
   const bbw = node.getBoundingClientRect().width;
   const bbh = node.getBoundingClientRect().height;
 
-  console.log({ bbw, bbh });
+  //   console.log({ bbw, bbh });
 
   const ratiow = bbw / gw;
   const ratioh = bbh / gh;
 
-  console.log({ ratiow, ratioh });
+  //   console.log({ ratiow, ratioh });
 
   let ww: number;
   let wh: number;
@@ -46,13 +46,13 @@ const buildVizParams = async ({
     scalem = wh / gh;
   }
 
-  console.log({ ww, wh });
+  //   console.log({ ww, wh });
 
   const g = svg.select('#graph0'); // id produced by hpccWasm.graphviz
   const transformSrc = g.attr('transform');
   const pt = utils.parseTransform(transformSrc);
 
-  console.log(pt);
+  //   console.log(pt);
 
   const s = pt.scale.x * scalem;
   const t = {
@@ -60,7 +60,7 @@ const buildVizParams = async ({
     y: pt.translate.y,
   };
 
-  console.log({ s, t });
+  //   console.log({ s, t });
 
   g.attr('transform', `scale(${s}) translate(${t.x},${t.y})`);
 

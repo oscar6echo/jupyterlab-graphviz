@@ -22,11 +22,14 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
   private _btnFit: i.d3SelectBtn;
   private _btnFullScreen: i.d3SelectBtn;
   private _btnSaveSvg: i.d3SelectBtn;
+  private _btnToggleHover: i.d3SelectBtn;
 
   private _wrapperViz: i.d3SelectDiv;
   private _vizSvg: i.d3SelectSvg;
   private _vizParams: i.IOutputBuildVizParams;
+
   private _running: boolean;
+  private _interactive: boolean;
 
   /**
    * Construct a new output widget.
@@ -36,6 +39,7 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
 
     super();
     this._mimeType = options.mimeType;
+    this._interactive = true;
 
     this.id = `node-${u.uuid()}`;
     this.addClass(CLASS_NAME);
@@ -55,6 +59,10 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
       .append('button')
       .attr('id', 'btn-savesvg')
       .attr('class', 'btn-action');
+    this._btnToggleHover = this._wrapperBtn
+      .append('button')
+      .attr('id', 'btn-savesvg')
+      .attr('class', 'btn-action');
 
     this._wrapperViz = root.append('div').attr('class', 'wrapper-viz');
 
@@ -68,7 +76,7 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
    * render .dot into widget's node.
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
-    console.log('--- start GraphvizWidget renderModel');
+    console.log('start GraphvizWidget renderModel');
 
     this._data = model.data[this._mimeType] as string;
     return this.drawDot({ data: this._data, reset: false });
@@ -86,11 +94,11 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     const vizExists = !root.select('svg#viz').empty();
 
     if (vizExists && !reset) {
-      console.log('viz already exists and not reset - SKIP');
+      console.log('>>> viz already exists and not reset - SKIP');
       return;
     }
     if (vizExists) {
-      console.log('remove existing element');
+      console.log('>>> remove existing element');
       root.select('svg#viz').remove();
     }
 
@@ -131,8 +139,14 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     this._btnSaveSvg.html('Save as SVG');
     this._btnSaveSvg.on('click', () => this.onClickSaveAsSvg());
 
-    const hover = f.buildHover(this._vizSvg);
-    hover();
+    const hoverStatus = this._interactive ? 'On' : 'Off';
+    this._btnToggleHover.html(`Hover: ${hoverStatus}`);
+    this._btnToggleHover.on('click', () => this.onClickToggleHover());
+
+    if (this._interactive) {
+      const hover = f.buildHover(this._vizSvg);
+      hover();
+    }
   }
 
   buildOnFullscreenchange(): any {
@@ -148,12 +162,12 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     const onFullscreenchange = () => {
       if (document.fullscreenElement) {
         const id = document.fullscreenElement.id;
-        console.log(`>>>> element id=${id} entered fullscreen mode`);
+        console.log(`>>> element id=${id} entered fullscreen mode`);
         if (!this._running) {
           u.delayAfterNextRepaint(func);
         }
       } else {
-        console.log('>>>> leaving fullscreen mode');
+        console.log('>>> leaving fullscreen mode');
         if (!this._running) {
           u.delayAfterNextRepaint(func);
         }
@@ -164,21 +178,26 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
   }
 
   onClickFit(): void {
-    console.log('onClickFit');
+    console.log('--- onClickFit');
     this.drawDot({ reset: true });
   }
 
+  onClickFullscreen(): void {
+    console.log('--- onClickFullscreen');
+    this._wrapperViz
+      .node()
+      .requestFullscreen()
+      .catch((err) => {
+        const msg = `Cannot go fullscreen: ${err.message} (${err.name})`;
+        console.log(msg);
+      });
+  }
+
   onClickSaveAsSvg(): void {
-    console.log('onClickSaveAsSvg');
+    console.log('--- onClickSaveAsSvg');
 
     const domRect = this.node.getBoundingClientRect();
     const svgRect = (this._vizSvg.node() as SVGSVGElement).getBBox();
-
-    // console.log('wrapper: this.node');
-    // console.log(domRect);
-
-    // console.log('svg: vizSvg');
-    // console.log(svgRect);
 
     const width = Math.min(svgRect.width + svgRect.x, domRect.width);
     const height = Math.min(svgRect.height + svgRect.y, domRect.height);
@@ -187,15 +206,15 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     u.downloadSVG({ node: this._wrapperViz.node(), dimensions: svgDims });
   }
 
-  onClickFullscreen(): void {
-    console.log('onClickFullscreen');
-    this._wrapperViz
-      .node()
-      .requestFullscreen()
-      .catch((err) => {
-        const msg = `Cannot go fullscreen: ${err.message} (${err.name})`;
-        console.log(msg);
-      });
+  onClickToggleHover(): void {
+    console.log('--- onClickToggleHover');
+    this._interactive = !this._interactive;
+    if (this._interactive) {
+      this._btnToggleHover.html('Hover: On');
+    } else {
+      this._btnToggleHover.html('Hover: Off');
+    }
+    this.drawDot({ reset: true });
   }
 }
 
