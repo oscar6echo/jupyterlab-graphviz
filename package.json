@@ -1,7 +1,7 @@
 {
     "name": "@oscar6echo/jupyterlab_graphviz",
     "version": "0.1.0",
-    "description": "A JupyterLab extension for rendering .dot files.",
+    "description": "A JupyterLab extension for rendering .(dot|svg) files.",
     "keywords": [
         "jupyter",
         "jupyterlab",

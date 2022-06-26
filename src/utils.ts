@@ -3,7 +3,10 @@
 import * as hpccWasm from '@hpcc-js/wasm';
 import * as i from './interfaces';
 
-const parseTransform = (s: string): i.IParseTransformOutput => {
+const parseTransform = (s?: string): i.IParseTransformOutput => {
+  if (!s) {
+    return { scale: { x: 1, y: 1 }, translate: { x: 0, y: 0 } };
+  }
   const matches = s.match(
     /(translate|matrix|rotate|skewX|skewY|scale)\(.*?\)/g
   );

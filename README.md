@@ -1,13 +1,18 @@
 # jupyterlab_graphviz
 
-A JupyterLab extension for rendering .dot files.
+A JupyterLab extension for rendering graphviz-dot or svg files.
 
 ## Overview
 
-This jupyterlab extension allows to display, zoom into, and snapshot as [svg](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics) a [dot](<https://en.wikipedia.org/wiki/DOT_(graph_description_language)>) file.
+This jupyterlab extension allows to display, zoom into, and snapshot as [svg](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics):
 
-- Based on [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm).
-- Inspired by ObservableHQ notebook [@oscar6echo/zoom-and-pan-graphviz-dot](https://observablehq.com/@oscar6echo/zoom-and-pan-graphviz-dot).
+- [dot](<https://en.wikipedia.org/wiki/DOT_(graph_description_language)>) files
+- [svg](https://developer.mozilla.org/en-US/docs/Web/SVG) files
+
+It is:
+
+- based on [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm).
+- inspired by ObservableHQ notebook [@oscar6echo/zoom-and-pan-graphviz-dot](https://observablehq.com/@oscar6echo/zoom-and-pan-graphviz-dot).
 
 <img src="./img/screenshot-jupyterlab_graphviz.png" width=500px>
 
@@ -18,8 +23,15 @@ This jupyterlab extension allows to display, zoom into, and snapshot as [svg](ht
 ## Install
 
 ```bash
+# if/when published
 pip install jupyterlab_graphviz
+
+# else git clone repo and install locally from repo root folder
+jlpm run build:prod
+pip install .
 ```
+
+_NOTE_: On windows, you need adjust script `cpwasm` in [package.json](./package.json).
 
 ## Contributing
 

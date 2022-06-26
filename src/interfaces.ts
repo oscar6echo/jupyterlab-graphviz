@@ -20,7 +20,9 @@ interface IParamsDrawDot {
 }
 
 interface IParamsBuildVizParams {
-  dotScript: string;
+  svgStr: string;
+  isFromDot: boolean;
+  //   dotScript: string;
   wrapper: d3SelectDiv;
 }
 

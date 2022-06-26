@@ -7,9 +7,11 @@ import * as d3Zoom from 'd3-zoom';
 import * as i from './interfaces';
 import * as u from './utils';
 import * as f from './functions';
+import * as utils from './utils';
 
-const MIME_TYPE = 'application/vnd.graphviz';
-const CLASS_NAME = 'mimerenderer-graphviz';
+const MIME_TYPE_DOT = 'application/vnd.graphviz-dot';
+const MIME_TYPE_SVG = 'image/svg+xml';
+const CLASS_NAME = 'mimerenderer-graphviz-dot-svg';
 
 /**
  * widget for rendering .dot.
@@ -25,8 +27,7 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
   private _btnToggleHover: i.d3SelectBtn;
 
   private _wrapperViz: i.d3SelectDiv;
-  private _vizSvg: i.d3SelectSvg;
-  private _vizParams: i.IOutputBuildVizParams;
+  private _containerViz: i.d3SelectSvg;
 
   private _running: boolean;
   private _interactive: boolean;
@@ -40,6 +41,9 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     super();
     this._mimeType = options.mimeType;
     this._interactive = true;
+
+    console.log('---');
+    console.log(options);
 
     this.id = `node-${u.uuid()}`;
     this.addClass(CLASS_NAME);
@@ -73,22 +77,24 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
   }
 
   /**
-   * render .dot into widget's node.
+   * render .(dot|svg) into widget's node.
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     console.log('start GraphvizWidget renderModel');
 
+    console.log('>>>');
+    console.log(model);
+
     this._data = model.data[this._mimeType] as string;
-    return this.drawDot({ data: this._data, reset: false });
+    return this.drawModel({ data: this._data, reset: false });
   }
 
   /**
    * main action entrypoint
    */
-  async drawDot({ data, reset }: i.IParamsDrawDot): Promise<void> {
-    console.log('--- start GraphvizWidget drawDot');
+  async drawModel({ data, reset }: i.IParamsDrawDot): Promise<void> {
+    console.log('--- start GraphvizWidget drawModel');
 
-    //   const root = d3.select(this.node);
     const root = this._wrapperViz;
 
     const vizExists = !root.select('svg#viz').empty();
@@ -102,34 +108,39 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
       root.select('svg#viz').remove();
     }
 
-    this._vizParams = await f.buildVizParams({
-      dotScript: data ? data : this._data,
-      wrapper: this._wrapperViz,
-    });
+    // svg
+    const _data = data ? data : this._data;
+    const isFromDot = this._mimeType === MIME_TYPE_DOT;
+    const svgStr = isFromDot ? await utils.dot2svg(_data) : _data;
 
-    this._vizSvg = root.append('svg');
-    this._vizSvg.attr('id', 'viz');
-    this._vizSvg.attr('width', this._vizParams.dimensions.wrapper.width);
-    this._vizSvg.attr('height', this._vizParams.dimensions.wrapper.height);
-    this._vizSvg.html(this._vizParams.html);
+    const y = root.node().getBoundingClientRect().height;
+    const style = `width: 100%; height: ${y}px;`;
+    this._containerViz = root
+      .append('svg')
+      .attr('id', 'viz')
+      .attr('style', style);
+    this._containerViz.html(null);
+    const g = this._containerViz.append('g');
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgStr, 'image/svg+xml');
+    const svgElt = doc.documentElement;
+
+    svgElt.setAttribute('id', 'viewer');
+    svgElt.setAttribute('width', '100%');
+    svgElt.setAttribute('height', '');
+
+    g.node()?.appendChild(svgElt);
 
     const zoomed = (e: any) => {
-      //   console.log(e.transform);
-      this._vizSvg
-        .select(`#${this._vizParams.id}`)
-        .attr('transform', e.transform);
+      console.log(e.transform);
+      g.attr('transform', e.transform);
     };
 
-    const t = this._vizParams.transform.zoom;
-
     const zoom = d3Zoom.zoom().on('zoom', zoomed);
+    this._containerViz.call(zoom as any);
 
-    this._vizSvg.call(
-      zoom.transform as any,
-      d3Zoom.zoomIdentity.scale(t.scale).translate(t.translate.x, t.translate.y)
-    );
-    this._vizSvg.call(zoom as any);
-
+    // buttons
     this._btnFit.html('Fit');
     this._btnFit.on('click', () => this.onClickFit());
 
@@ -143,8 +154,10 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     this._btnToggleHover.html(`Hover: ${hoverStatus}`);
     this._btnToggleHover.on('click', () => this.onClickToggleHover());
 
+    console.log('DONE');
+
     if (this._interactive) {
-      const hover = f.buildHover(this._vizSvg);
+      const hover = f.buildHover(this._containerViz);
       hover();
     }
   }
@@ -155,7 +168,7 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     const func = () => {
       console.log('start exec func');
       this._running = true;
-      this.drawDot({ reset: true });
+      this.drawModel({ reset: true });
       this._running = false;
     };
 
@@ -179,7 +192,7 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
 
   onClickFit(): void {
     console.log('--- onClickFit');
-    this.drawDot({ reset: true });
+    this.drawModel({ reset: true });
   }
 
   onClickFullscreen(): void {
@@ -197,7 +210,7 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     console.log('--- onClickSaveAsSvg');
 
     const domRect = this.node.getBoundingClientRect();
-    const svgRect = (this._vizSvg.node() as SVGSVGElement).getBBox();
+    const svgRect = (this._containerViz.node() as SVGSVGElement).getBBox();
 
     const width = Math.min(svgRect.width + svgRect.x, domRect.width);
     const height = Math.min(svgRect.height + svgRect.y, domRect.height);
@@ -214,16 +227,16 @@ export class GraphvizWidget extends Widget implements IRenderMime.IRenderer {
     } else {
       this._btnToggleHover.html('Hover: Off');
     }
-    this.drawDot({ reset: true });
+    this.drawModel({ reset: true });
   }
 }
 
 /**
- * A mime renderer factory for .dot data.
+ * A mime renderer factory for .(dot|svg) data.
  */
 export const rendererFactory: IRenderMime.IRendererFactory = {
   safe: true,
-  mimeTypes: [MIME_TYPE],
+  mimeTypes: [MIME_TYPE_SVG, MIME_TYPE_DOT],
   createRenderer: (options) => new GraphvizWidget(options),
 };
 
@@ -231,7 +244,7 @@ export const rendererFactory: IRenderMime.IRendererFactory = {
  * Extension definition.
  */
 const extension: IRenderMime.IExtension = {
-  id: 'jupyterlab-graphviz:plugin',
+  id: 'jupyterlab-graphviz-dot-svg:plugin',
   rendererFactory,
   rank: 0,
   dataType: 'string',
@@ -240,16 +253,31 @@ const extension: IRenderMime.IExtension = {
       name: 'dot',
       iconClass: 'jp-MaterialIcon mimerenderer-graphviz-icon',
       fileFormat: 'text',
-      mimeTypes: [MIME_TYPE],
+      mimeTypes: [MIME_TYPE_DOT],
       extensions: ['.dot'],
     },
+    {
+      name: 'svg',
+      iconClass: 'jp-MaterialIcon mimerenderer-svg-icon',
+      fileFormat: 'text',
+      mimeTypes: [MIME_TYPE_SVG],
+      extensions: ['.svg'],
+    },
   ],
-  documentWidgetFactoryOptions: {
-    name: 'graphviz-dot viewer',
-    primaryFileType: 'dot',
-    fileTypes: ['dot'],
-    defaultFor: ['dot'],
-  },
+  documentWidgetFactoryOptions: [
+    {
+      name: 'dot-viewer',
+      primaryFileType: 'dot',
+      fileTypes: ['dot'],
+      defaultFor: ['dot'],
+    },
+    {
+      name: 'svg-viewer',
+      primaryFileType: 'svg',
+      fileTypes: ['svg'],
+      defaultFor: ['svg'],
+    },
+  ],
 };
 
 export default extension;
