@@ -14,7 +14,11 @@ It is:
 - based on [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm).
 - inspired by ObservableHQ notebook [@oscar6echo/zoom-and-pan-graphviz-dot](https://observablehq.com/@oscar6echo/zoom-and-pan-graphviz-dot).
 
-<img src="./img/screenshot-jupyterlab_graphviz.png" width=500px>
+<img src="./img/screenshot-jupyterlab_graphviz-dot.png" width=500px>
+
+A dot file is first converted to svg before display, so native svg files are rendered too - with same pan/zoom/fullscreen/snapshot features.
+
+<img src="./img/screenshot-jupyterlab_graphviz-svg.png" width=500px>
 
 ## Requirements
 
